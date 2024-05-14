@@ -19,8 +19,10 @@ class App extends React.Component{
   render() {
     return (
       <div>
-        <Home boards={this.state.boards}
-        createNewBoard={this.createNewBoard}/>
+        <Home 
+          boards={this.state.boards}
+          createNewBoard={this.createNewBoard}
+        />
         <Board/>
       </div>
     )

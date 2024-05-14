@@ -141,11 +141,6 @@ header a {
 	white-space: nowrap;
 }
 
-/* add as onmouseover event in js */
-.lists-wrapper:hover {
-	overflow: scroll;
-}
-
 .list {
 	display: inline-block;
 	vertical-align: top;
@@ -325,4 +320,35 @@ textarea.textbox-edit:hover {
 		width: 80vw;
 	}
 
+}
+
+@media screen and (max-width: 320px) {
+	.create-board-wrapper {
+		flex-direction: column;
+	}
+
+	.create-board-wrapper button {
+		margin: 5px auto 10px auto;
+	} 
+
+	.board-preview-wrapper {
+		grid-template-columns: repeat(2, 1fr);
+		grid-gap: 20px;
+	}
+
+	.sign-up-form input {
+		width: 80vw;
+	}
+
+	.lists-wrapper {
+		display: flex;
+		flex-direction: column;
+		overflow: visible;
+		white-space: normal;
+	}
+
+	.list {
+		width: auto;
+		margin: 10px 0;
+	}
 }
