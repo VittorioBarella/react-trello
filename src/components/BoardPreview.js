@@ -5,14 +5,17 @@ import { useNavigate } from 'react-router-dom'
 function BoardPreview(props) {
     const navigate = useNavigate();
 
-    const goToBoard = () => {
-        const boardId = props.board.id
-        navigate(`/board/${boardId}`);
+    const goToBoard = (boardId) => {
+        const state = {
+            title: props.board.title, 
+            background: props.board.background
+        };
+        navigate(`/board/${boardId}`, { state });
     }
 
     return (
         <ul className='board-preview-item'
-            onClick={goToBoard}
+            onClick={() => goToBoard(props.board.id)} 
             style={{backgroundColor: props.board.background}}
         >
             <li>{props.board.title}</li>
