@@ -1,10 +1,11 @@
-import React from 'react'; 
+import React from 'react';
 import './App.css';
-import Board from './components/Board';
+import Board from './components/Board'; // Mantendo o mesmo nome do componente
 import data from './sampleData';
 import Home from './components/pages/Home';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import PageNotFound from './components/pages/PageNotFound';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 
 class App extends React.Component {
   state = {
@@ -25,15 +26,15 @@ class App extends React.Component {
         <BrowserRouter>
           <Routes>
             <Route
-              path="/"
+              path="/:userId/boards"
               element={
-                <Home
-                  boards={this.state.boards}
-                  createNewBoard={this.createNewBoard}
+                <Home 
+                  boards={this.state.boards} 
+                  createNewBoard={this.createNewBoard} 
                 />
               }
             />
-            <Route path="/board" element={<Board />} />
+            <Route path="/board/:boardId" element={<BoardWrapper />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </BrowserRouter>
@@ -41,5 +42,13 @@ class App extends React.Component {
     );
   }
 }
+
+const BoardWrapper = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const params = useParams();
+
+  return <Board navigate={navigate} location={location} params={params} />;
+};
 
 export default App;
