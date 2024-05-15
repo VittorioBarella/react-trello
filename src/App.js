@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-import Board from './components/Board'; // Mantendo o mesmo nome do componente
+import Board from './components/Board'; 
 import data from './sampleData';
 import Home from './components/pages/Home';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
