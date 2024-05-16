@@ -1,77 +1,75 @@
-import React from "react";
-import List from './List'
-import data from '../sampleData'
+import React, { useState, useEffect, useRef } from "react";
+import List from './List';
+import data from '../sampleData';
+import { listsRef, addDoc } from "../firebase";
+import { useParams, useLocation } from 'react-router-dom';
 
-class Board extends React.Component {
-    state =  {
-        currentLists: []
-    }
-    componentDidMount() {
-        this.setState({
-            currentLists: data.lists
-        })
-    }
+const Board = () => {
+    const [currentLists, setCurrentLists] = useState([]);
+    const addBoardInput = useRef();
+    const { boardId } = useParams();
+    const location = useLocation();
 
-    addBoardInput = React.createRef()
+    useEffect(() => {
+        setCurrentLists(data.lists);
+    }, []);
 
-    createNewList = (e) => {
+    const createNewList = async (e) => {
         e.preventDefault();
         const list = {
-            id: Math.random(), 
-            title: this.addBoardInput.current.value,
-            board: 300,
-            createAt: new Date(),
-            cards: [
-                {
-                    id: 1,
-                    text: 'Card 1',
-                },
-                {
-                    id: 2,
-                    text: 'Card 2',
-                }
-            ]
-        }
+            title: addBoardInput.current.value,
+            board: boardId,
+            createdAt: new Date(),
+        };
 
-        if(list.title) {
-            this.setState({ currentLists: [...this.state.currentLists, list]})
+        try {
+            if (list.title && list.board) {
+                const newList = await addDoc(listsRef, list); // Use addDoc para adicionar um novo documento
+                const listObj = {
+                    id: newList.id,
+                    ...list
+                };
+
+                setCurrentLists([...currentLists, listObj]);
+            }
+            addBoardInput.current.value = '';
+        } catch (error) {
+            console.error('Error creating a new list: ', error);
         }
-        this.addBoardInput.current.value = ''
-    }
-    render() {
-        return (
-            <div 
-                className="board-wrapper"
-                style={{
-                    backgroundColor: this.props.location.state.background
-                }}
-            >
-                <div className="board-header">
-                    <h3>{this.props.location.state.title}</h3>
-                    <button>Delete board</button>
-                </div>
-                <div className="lists-wrapper">
-                    {Object.keys(this.state.currentLists).map(key => (
-                        <List  
-                            key={this.state.currentLists[key].id}
-                            list={this.state.currentLists[key]}
-                        />
-                    ))}
-                </div>
-                <form 
-                    onSubmit={this.createNewList}
-                    className="new-list-wrapper"
-                >
-                    <input 
-                        type="text"
-                        ref={this.addBoardInput}
-                        name="name"
-                        placeholder=" + New List"
-                    />
-                </form>
+    };
+
+    return (
+        <div 
+            className="board-wrapper"
+            style={{
+                backgroundColor: location.state.background
+            }}
+        >
+            <div className="board-header">
+                <h3>{location.state.title}</h3>
+                <button>Delete board</button>
             </div>
-        )
-    }
-}
+            <div className="lists-wrapper">
+                {currentLists.map(list => (
+                    <List  
+                        key={list.id}
+                        list={list}
+                    />
+                ))}
+            </div>
+            <form 
+                onSubmit={createNewList}
+                className="new-list-wrapper"
+            >
+                <input 
+                    type="text"
+                    ref={addBoardInput}
+                    name="name"
+                    placeholder=" + New List"
+                />
+            </form>
+        </div>
+    );
+};
 
 export default Board;
