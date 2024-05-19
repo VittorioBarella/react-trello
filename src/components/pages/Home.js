@@ -1,15 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import BoardPreview from '../BoardPreview';
 import PropTypes from 'prop-types';
 import CreateBoardForm from '../CreateBoardForm';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 
-const Home = ({ boards, createNewBoard }) => {
+const Home = ({ boards, createNewBoard, getBoards }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const params = useParams();
 
-  // Crie um objeto `history` compatível, se necessário.
+  // useEffect substitui componentDidMount
+  useEffect(() => {
+    getBoards();
+  }, [getBoards]);
+
   const history = {
     push: navigate,
     replace: (path) => navigate(path, { replace: true }),
@@ -17,7 +21,7 @@ const Home = ({ boards, createNewBoard }) => {
 
   return (
     <div>
-        <span>{params.userId}</span>
+      <span>{params.userId}</span>
       <CreateBoardForm createNewBoard={createNewBoard} />
       <div className='board-preview-wrapper'>
         {boards.map((board, index) => (
@@ -31,6 +35,7 @@ const Home = ({ boards, createNewBoard }) => {
 Home.propTypes = {
   boards: PropTypes.array.isRequired,
   createNewBoard: PropTypes.func.isRequired,
+  getBoards: PropTypes.func.isRequired, 
 };
 
 export default Home;

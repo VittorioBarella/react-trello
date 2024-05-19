@@ -6,11 +6,8 @@ function BoardPreview(props) {
     const navigate = useNavigate();
 
     const goToBoard = (boardId) => {
-        const state = {
-            title: props.board.title, 
-            background: props.board.background
-        };
-        navigate(`/board/${boardId}`, { state });
+
+        navigate(`/board/${boardId}`);
     }
 
     return (
