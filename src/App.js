@@ -1,12 +1,12 @@
 import React from 'react';
 import './App.css';
 import Board from './components/Board'; 
-import data from './sampleData';
 import Home from './components/pages/Home';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import PageNotFound from './components/pages/PageNotFound';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import { boardsRef, addDoc } from './firebase';
+import { getDocs, addDoc } from 'firebase/firestore';
+import { boardsRef } from './firebase';
 
 class App extends React.Component {
   state = {
@@ -14,20 +14,36 @@ class App extends React.Component {
   };
 
   componentDidMount() {
-    this.setState({ boards: data.boards });
+    this.getBoards();
   }
 
-  createNewBoard = async board => {
+  getBoards = async () => {
+    try {
+      this.setState({ boards: [] });
+      const boardsSnapshot = await getDocs(boardsRef);
+      const boards = [];
+      boardsSnapshot.forEach((doc) => {
+        const boardData = doc.data();
+        console.log(boardData); // Log the data of the document to the console
+        boards.push({ id: doc.id, ...boardData });
+      });
+      this.setState({ boards });
+    } catch (error) {
+      console.error('Error getting boards:', error);
+    }
+  }
+
+  createNewBoard = async (board) => {
     try {
       const newBoard = await addDoc(boardsRef, board);
       const boardObj = {
         id: newBoard.id,
         ...board
-      }
+      };
 
       this.setState({ boards: [...this.state.boards, boardObj] });
     } catch (error) {
-      console.error('Error creating new board: ', error);
+      console.error('Error creating new board:', error);
     }
   }
 
@@ -41,7 +57,8 @@ class App extends React.Component {
               element={
                 <Home 
                   boards={this.state.boards} 
-                  createNewBoard={this.createNewBoard} 
+                  createNewBoard={this.createNewBoard}
+                  getBoards={this.getBoards}
                 />
               }
             />
