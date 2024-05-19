@@ -1,26 +1,24 @@
 import React, { useState, useEffect, useRef } from "react";
 import List from './List';
-import data from '../sampleData';
-import { db, listsRef, addDoc } from "../firebase"; // Importar 'db'
-import { useParams, useLocation } from 'react-router-dom';
-import { doc, getDoc } from "firebase/firestore"; // Importar 'doc' e 'getDoc'
+import { db } from "../firebase";
+import { useParams } from 'react-router-dom';
+import { collection, query, where, orderBy, onSnapshot, addDoc, doc, getDoc } from "firebase/firestore"; // Importar os métodos necessários
 
 const Board = () => {
     const [currentLists, setCurrentLists] = useState([]);
     const addBoardInput = useRef();
     const { boardId } = useParams();
-    const location = useLocation();
     const [currentBoard, setCurrentBoard] = useState({});
 
     useEffect(() => {
         getBoard(boardId);
-        setCurrentLists(data.lists);
+        getLists(boardId);
     }, [boardId]);
 
-    const getBoard = async boardId => {
+    const getBoard = async (boardId) => {
         try {   
-            const boardDoc = doc(db, "boards", boardId); // Usar 'doc' com 'db'
-            const boardSnapshot = await getDoc(boardDoc); // Usar 'getDoc'
+            const boardDoc = doc(db, "boards", boardId); 
+            const boardSnapshot = await getDoc(boardDoc); 
             if (boardSnapshot.exists()) {
                 setCurrentBoard(boardSnapshot.data());
             } else {
@@ -28,6 +26,44 @@ const Board = () => {
             }
         } catch (error) {
             console.log('Error getting board:', error);
+        }
+    };
+
+    const getLists = async (boardId) => {
+        try {
+            const listsQuery = query(
+                collection(db, 'lists'),
+                where('list.board', '==', boardId),
+                orderBy('list.createdAt')
+            );
+
+            onSnapshot(listsQuery, (snapshot) => {
+                const updatedLists = [];
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === 'added') {
+                        const doc = change.doc;
+                        const list = {
+                            id: doc.id,
+                            title: doc.data().list.title,
+                            cards: doc.data().list.cards || [], // Inicializar com um array vazio se cards não existir
+                        };
+                        updatedLists.push(list);
+                    }
+                    if (change.type === 'removed') {
+                        setCurrentLists(prevLists => prevLists.filter(list => list.id !== change.doc.id));
+                    }
+                });
+                // Atualizar a lista de uma vez para evitar duplicações
+                if (updatedLists.length) {
+                    setCurrentLists(prevLists => {
+                        const newListIds = updatedLists.map(list => list.id);
+                        const filteredPrevLists = prevLists.filter(list => !newListIds.includes(list.id));
+                        return [...filteredPrevLists, ...updatedLists];
+                    });
+                }
+            });
+        } catch (error) {
+            console.error('Error fetching lists: ', error);
         }
     };
 
@@ -41,13 +77,20 @@ const Board = () => {
 
         try {
             if (list.title && list.board) {
-                const newList = await addDoc(listsRef, list);
+                const newList = await addDoc(collection(db, 'lists'), { list });
                 const listObj = {
                     id: newList.id,
-                    ...list
+                    title: list.title,
+                    cards: [], // Inicializar com um array vazio
                 };
 
-                setCurrentLists([...currentLists, listObj]);
+                // Verificar se a lista já existe antes de adicionar
+                setCurrentLists(prevLists => {
+                    if (prevLists.some(existingList => existingList.id === listObj.id)) {
+                        return prevLists; // Evitar duplicação
+                    }
+                    return [...prevLists, listObj];
+                });
             }
             addBoardInput.current.value = '';
         } catch (error) {

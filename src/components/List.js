@@ -1,88 +1,116 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Card from "./Card";
-import PropTypes from 'prop-types'
-import { cardsRef, addDoc } from "../firebase";
+import PropTypes from 'prop-types';
+import { addDoc, collection, query, where, orderBy, onSnapshot } from "firebase/firestore"; 
+import { db } from "../firebase";
+import { v4 as uuidv4 } from 'uuid'; 
 
-class List extends React.Component {
-    state = {
-        currentCards: []
-    }
+const List = ({ list }) => {
+    const [currentCards, setCurrentCards] = useState([]);
+    const nameInput = useRef();
 
-    nameInput = React.createRef()
+    useEffect(() => {
+        const fetchCards = async (listId) => {
+            try {
+                const cardsQuery = query(
+                    collection(db, 'cards'),
+                    where('listId', '==', listId), 
+                    orderBy('createdAt')
+                );
 
-    createNewCard = async (e) => {
+                const unsubscribe = onSnapshot(cardsQuery, (snapshot) => {
+                    const updatedCards = [];
+                    snapshot.docChanges().forEach(change => {
+                        const doc = change.doc;
+                        const card = {
+                            id: doc.id,
+                            text: doc.data().text,
+                            labels: doc.data().labels
+                        };
+
+                        if (change.type === 'added') {
+                            updatedCards.push(card);
+                        }
+                        if (change.type === 'removed') {
+                            setCurrentCards(prevCards => prevCards.filter(card => card.id !== change.doc.id));
+                        }
+                        if (change.type === 'modified') {
+                            setCurrentCards(prevCards => prevCards.map(item => 
+                                item.id === change.doc.id ? card : item
+                            ));
+                        }
+                    });
+                    if (updatedCards.length) {
+                        setCurrentCards(prevCards => [...prevCards, ...updatedCards]);
+                    }
+                });
+
+                return () => unsubscribe();
+            } catch (error) {
+            }
+        };
+
+        if (list) {
+            fetchCards(list.id);
+        }
+
+        return () => setCurrentCards([]); 
+    }, [list]);
+
+    const createNewCard = async (e) => {
         e.preventDefault();
         try {
-            const cardText = this.nameInput.current.value.trim();
+            const cardText = nameInput.current.value.trim();
             if (!cardText) {
-                return; // Retorna se o texto do cartão for vazio
+                return;
             }
     
             const newCard = {
                 text: cardText,
-                listId: this.props.list.id,
+                listId: list.id,
                 labels: [],
                 createdAt: new Date()
             };
+
+            newCard.id = list.id ? list.id + '-' + uuidv4() : uuidv4();
     
-            await addDoc(cardsRef, newCard); // Adiciona o novo cartão ao Firestore
-            this.setState(prevState => ({
-                currentCards: [...prevState.currentCards, newCard]
-            }));
+            const docRef = await addDoc(collection(db, 'cards'), newCard); 
     
-            this.nameInput.current.value = ''; // Limpa o campo de entrada
-            console.log('New card added:', newCard);
+            setCurrentCards(prevCards => [...prevCards, newCard]);
+    
+            nameInput.current.value = ''; 
         } catch (error) {
-            console.error('Error creating new card:', error);
         }
-    }
-    render() {
-        const { list } = this.props;
+    };
 
-        // Verifique se list é undefined ou null e atribua um objeto vazio se for
-        if (!list) {
-            console.log('List is undefined or null');
-            return null; // Retorna nulo se list for undefined ou null
-        }
-
-        // Verifique se list.cards é undefined ou null e atribua um objeto vazio se for
-        if (!list.cards) {
-            console.log('List cards is undefined or null');
-            return null; // Retorna nulo se list.cards for undefined ou null
-        }
-
-        // Use Object.keys(list.cards) para obter as chaves de list.cards, ou um array vazio se list.cards for undefined ou null
-        const cardKeys = Object.keys(list.cards);
-
-        return(
-            <div className="list">   
-                <div className="list-header">
-                    <p>{list.title}</p>
-                </div>
-                {cardKeys.map(key => (
-                    <Card 
-                        key={key} 
-                        data={list.cards[key]}
-                    />
-                ))}
-                <form 
-                    onSubmit={this.createNewCard} 
-                    className="new-card-wrapper"
-                >
-                    <input
-                        type="text"
-                        ref={this.nameInput}
-                        name="name"
-                        placeholder=" + New card"
-                    />
-                </form>
+    return (
+        <div className="list">   
+            <div className="list-header">
+                <p>{list.title}</p>
             </div>
-        )
-    }
+            {currentCards.map((card, index) => (
+                <Card 
+                    key={uuidv4()} 
+                    data={card}
+                />
+            ))}
+            <form 
+                onSubmit={createNewCard} 
+                className="new-card-wrapper"
+            >
+                <input
+                    type="text"
+                    ref={nameInput}
+                    name="name"
+                    placeholder=" + New card"
+                />
+            </form>
+        </div>
+    );
 }
 
 List.propTypes = {
     list: PropTypes.object.isRequired
 }
 
-export default List
+export default List;
