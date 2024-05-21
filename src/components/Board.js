@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import List from './List';
 import { db } from "../firebase";
 import { useParams } from 'react-router-dom';
-import { collection, query, where, orderBy, onSnapshot, addDoc, doc, getDoc } from "firebase/firestore"; // Importar os métodos necessários
+import { collection, query, where, orderBy, onSnapshot, addDoc, doc, getDoc } from "firebase/firestore";
 
 const Board = () => {
     const [currentLists, setCurrentLists] = useState([]);
@@ -45,7 +45,7 @@ const Board = () => {
                         const list = {
                             id: doc.id,
                             title: doc.data().list.title,
-                            cards: doc.data().list.cards || [], // Inicializar com um array vazio se cards não existir
+                            cards: doc.data().list.cards || [],
                         };
                         updatedLists.push(list);
                     }
@@ -53,7 +53,6 @@ const Board = () => {
                         setCurrentLists(prevLists => prevLists.filter(list => list.id !== change.doc.id));
                     }
                 });
-                // Atualizar a lista de uma vez para evitar duplicações
                 if (updatedLists.length) {
                     setCurrentLists(prevLists => {
                         const newListIds = updatedLists.map(list => list.id);
@@ -81,13 +80,12 @@ const Board = () => {
                 const listObj = {
                     id: newList.id,
                     title: list.title,
-                    cards: [], // Inicializar com um array vazio
+                    cards: [],
                 };
 
-                // Verificar se a lista já existe antes de adicionar
                 setCurrentLists(prevLists => {
                     if (prevLists.some(existingList => existingList.id === listObj.id)) {
-                        return prevLists; // Evitar duplicação
+                        return prevLists;
                     }
                     return [...prevLists, listObj];
                 });
@@ -95,6 +93,17 @@ const Board = () => {
             addBoardInput.current.value = '';
         } catch (error) {
             console.error('Error creating a new list: ', error);
+        }
+    };
+
+    const deleteList = async (listId) => {
+        try {
+            // Excluir a lista com o listId fornecido
+            await db.collection('lists').doc(listId).delete();
+            // Remover a lista excluída da lista de listas atuais
+            setCurrentLists(prevLists => prevLists.filter(list => list.id !== listId));
+        } catch (error) {
+            console.error('Error deleting list: ', error);
         }
     };
 
@@ -114,6 +123,7 @@ const Board = () => {
                     <List  
                         key={list.id}
                         list={list}
+                        deleteList={deleteList} // Passando a função deleteList como prop
                     />
                 ))}
             </div>
