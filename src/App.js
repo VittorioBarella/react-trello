@@ -5,7 +5,7 @@ import Home from './components/pages/Home';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import PageNotFound from './components/pages/PageNotFound';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import { getDocs, addDoc } from 'firebase/firestore';
+import { getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { boardsRef } from './firebase';
 
 class App extends React.Component {
@@ -47,6 +47,17 @@ class App extends React.Component {
     }
   }
 
+  deleteBoard = async (boardId) => {
+    try {
+      await deleteDoc(doc(boardsRef, boardId));
+      this.setState({
+        boards: this.state.boards.filter(board => board.id !== boardId)
+      });
+    } catch (error) {
+      console.error('Error deleting board:', error);
+    }
+  }
+
   render() {
     return (
       <div>
@@ -59,10 +70,16 @@ class App extends React.Component {
                   boards={this.state.boards} 
                   createNewBoard={this.createNewBoard}
                   getBoards={this.getBoards}
+                  deleteBoard={this.deleteBoard}
                 />
               }
             />
-            <Route path="/board/:boardId" element={<BoardWrapper />} />
+            <Route 
+              path="/board/:boardId" 
+              element={
+                <BoardWrapper deleteBoard={this.deleteBoard} />
+              } 
+            />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </BrowserRouter>
@@ -71,12 +88,19 @@ class App extends React.Component {
   }
 }
 
-const BoardWrapper = () => {
+const BoardWrapper = ({ deleteBoard }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const params = useParams();
 
-  return <Board navigate={navigate} location={location} params={params} />;
+  return (
+    <Board 
+      navigate={navigate} 
+      location={location} 
+      params={params} 
+      deleteBoard={deleteBoard}
+    />
+  );
 };
 
 export default App;

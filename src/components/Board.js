@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import List from './List';
 import { db } from "../firebase";
 import { useParams } from 'react-router-dom';
-import { collection, query, where, orderBy, onSnapshot, addDoc, doc, getDoc } from "firebase/firestore";
+import { collection, query, where, orderBy, onSnapshot, addDoc, doc, getDoc, deleteDoc } from "firebase/firestore";
+import PropTypes from 'prop-types';
 
-const Board = () => {
+const Board = ({ deleteBoard }) => {
     const [currentLists, setCurrentLists] = useState([]);
     const addBoardInput = useRef();
     const { boardId } = useParams();
@@ -98,12 +99,18 @@ const Board = () => {
 
     const deleteList = async (listId) => {
         try {
-            // Excluir a lista com o listId fornecido
-            await db.collection('lists').doc(listId).delete();
-            // Remover a lista excluída da lista de listas atuais
+            await deleteDoc(doc(db, 'lists', listId));
             setCurrentLists(prevLists => prevLists.filter(list => list.id !== listId));
         } catch (error) {
             console.error('Error deleting list: ', error);
+        }
+    };
+
+    const handleDeleteBoard = async () => {
+        try {
+            await deleteBoard(boardId);
+        } catch (error) {
+            console.error('Error deleting board: ', error);
         }
     };
 
@@ -116,14 +123,14 @@ const Board = () => {
         >
             <div className="board-header">
                 <h3>{currentBoard.title}</h3>
-                <button>Delete board</button>
+                <button onClick={handleDeleteBoard}>Delete board</button>
             </div>
             <div className="lists-wrapper">
                 {currentLists.map(list => (
                     <List  
                         key={list.id}
                         list={list}
-                        deleteList={deleteList} // Passando a função deleteList como prop
+                        deleteList={deleteList} 
                     />
                 ))}
             </div>
@@ -141,5 +148,9 @@ const Board = () => {
         </div>
     );
 };
+
+Board.propTypes = {
+    deleteBoard: PropTypes.func.isRequired
+}
 
 export default Board;
