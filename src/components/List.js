@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import Card from "./Card";
 import PropTypes from 'prop-types';
-import { addDoc, collection, query, where, orderBy, onSnapshot, getDocs, deleteDoc, doc } from "firebase/firestore";
-import { cardsRef, db  } from "../firebase";
-
+import { addDoc, collection, query, where, orderBy, onSnapshot, getDocs, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { cardsRef, db } from "../firebase";
 
 const List = ({ list, deleteList }) => {
     const [currentCards, setCurrentCards] = useState([]);
+    const [listTitle, setListTitle] = useState(list.title); // Novo estado para o título da lista
     const nameInput = useRef();
 
     useEffect(() => {
@@ -14,7 +14,7 @@ const List = ({ list, deleteList }) => {
             try {
                 const cardsQuery = query(
                     collection(db, 'cards'),
-                    where('listId', '==', listId), 
+                    where('listId', '==', listId),
                     orderBy('createdAt')
                 );
 
@@ -42,10 +42,10 @@ const List = ({ list, deleteList }) => {
 
                     setCurrentCards(prevCards => {
                         let newCards = prevCards.filter(card => !removedCards.includes(card.id));
-                        newCards = newCards.map(card => 
+                        newCards = newCards.map(card =>
                             modifiedCards.find(modCard => modCard.id === card.id) || card
                         );
-                        newCards = [...newCards, ...addedCards.filter(card => 
+                        newCards = [...newCards, ...addedCards.filter(card =>
                             !newCards.some(existingCard => existingCard.id === card.id)
                         )];
                         return newCards;
@@ -62,24 +62,33 @@ const List = ({ list, deleteList }) => {
             fetchCards(list.id);
         }
 
-        return () => setCurrentCards([]); 
+        return () => setCurrentCards([]);
     }, [list]);
 
-// Função handleDeleteList
-const handleDeleteList = async () => {
-    try {
-        const listId = list.id;
-        const cardsSnapshot = await getDocs(query(cardsRef, where('listId', '==', listId))); // Usando getDocs ao invés de cardsRef.where
-        if (cardsSnapshot.docs.length !== 0) {
-            cardsSnapshot.forEach(card => {
-                deleteDoc(card.ref); // Usando deleteDoc para excluir documento
-            });
+    useEffect(() => {
+        const unsubscribe = onSnapshot(doc(db, "lists", list.id), (doc) => {
+            if (doc.exists()) {
+                setListTitle(doc.data().title);
+            }
+        });
+
+        return () => unsubscribe();
+    }, [list.id]);
+
+    const handleDeleteList = async () => {
+        try {
+            const listId = list.id;
+            const cardsSnapshot = await getDocs(query(cardsRef, where('listId', '==', listId)));
+            if (cardsSnapshot.docs.length !== 0) {
+                cardsSnapshot.forEach(card => {
+                    deleteDoc(card.ref);
+                });
+            }
+            await deleteDoc(doc(db, 'lists', listId));
+        } catch (error) {
+            console.error('Error deleting list: ', error);
         }
-        await deleteDoc(doc(db, 'lists', listId)); // Usando deleteDoc para excluir lista
-    } catch(error) {
-        console.error('Error deleting list: ', error);
-    }            
-};
+    };
 
     const createNewCard = async (e) => {
         e.preventDefault();
@@ -88,7 +97,7 @@ const handleDeleteList = async () => {
             if (!cardText) {
                 return;
             }
-    
+
             const newCard = {
                 text: cardText,
                 listId: list.id,
@@ -96,16 +105,16 @@ const handleDeleteList = async () => {
                 createdAt: new Date()
             };
 
-            const docRef = await addDoc(collection(db, 'cards'), newCard); 
-    
+            const docRef = await addDoc(collection(db, 'cards'), newCard);
+
             setCurrentCards(prevCards => {
                 if (!prevCards.some(card => card.id === docRef.id)) {
                     return [...prevCards, { ...newCard, id: docRef.id }];
                 }
                 return prevCards;
             });
-    
-            nameInput.current.value = ''; 
+
+            nameInput.current.value = '';
         } catch (error) {
             console.error("Error creating card: ", error);
         }
@@ -114,31 +123,33 @@ const handleDeleteList = async () => {
     const updateList = async (e) => {
         try {
             const newTitle = e.currentTarget.value;
-            await db.collection('lists').doc(list.id).update({ title: newTitle });
+            setListTitle(newTitle);
+            const listDoc = doc(db, 'lists', list.id);
+            await updateDoc(listDoc, { title: newTitle });
         } catch (error) {
             console.error("Error updating list: ", error);
         }
     };
 
     return (
-        <div className="list">   
+        <div className="list">
             <div className="list-header">
                 <input
                     type="text"
                     name="listTitle"
+                    value={listTitle} // Mudança de defaultValue para value
                     onChange={updateList}
-                    defaultValue={list.title}
                 />
                 <span onClick={handleDeleteList}>&times;</span>
             </div>
             {currentCards.map((card) => (
-                <Card 
-                    key={card.id} 
+                <Card
+                    key={card.id}
                     data={card}
                 />
             ))}
-            <form 
-                onSubmit={createNewCard} 
+            <form
+                onSubmit={createNewCard}
                 className="new-card-wrapper"
             >
                 <input
