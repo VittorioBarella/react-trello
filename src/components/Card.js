@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from 'prop-types';
-import { cardsRef } from "../firebase"; // Certifique-se de que o caminho está correto
+import { cardsRef } from "../firebase";
 import { doc, deleteDoc } from "firebase/firestore";
 import EditCardModal from "./EditCardModal";
 
