@@ -28,9 +28,9 @@ class EditCardModal extends React.Component {
             const cardId = this.props.cardData.id;
             const newText = this.textInput.current.value;
             const labels = this.state.selectedLabels;
-            const cardDocRef = doc(cardsRef, cardId); // Corrigir a referência ao documento
+            const cardDocRef = doc(cardsRef, cardId);
             await updateDoc(cardDocRef, {
-                'text': newText, // Corrigir o caminho do campo conforme necessário
+                'text': newText, 
                 'labels': labels
             });
             this.props.toggleModal();
