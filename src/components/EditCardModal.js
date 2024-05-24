@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import React from "react";
 import { cardsRef } from '../firebase';
+import { doc, updateDoc } from "firebase/firestore";
 
 class EditCardModal extends React.Component {
     state = {
@@ -27,10 +28,10 @@ class EditCardModal extends React.Component {
             const cardId = this.props.cardData.id;
             const newText = this.textInput.current.value;
             const labels = this.state.selectedLabels;
-            const card = await cardsRef.doc(cardId);
-            await card.update({
-                'card.text': newText,
-                'card.labels': labels
+            const cardDocRef = doc(cardsRef, cardId);
+            await updateDoc(cardDocRef, {
+                'text': newText, 
+                'labels': labels
             });
             this.props.toggleModal();
         } catch (error) {
