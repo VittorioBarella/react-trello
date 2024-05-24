@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import List from './List';
 import { db } from "../firebase";
 import { useParams } from 'react-router-dom';
-import { collection, query, where, orderBy, onSnapshot, addDoc, doc, getDoc, deleteDoc } from "firebase/firestore";
+import { collection, query, where, orderBy, onSnapshot, addDoc, doc, getDoc, deleteDoc, updateDoc } from "firebase/firestore";
 import PropTypes from 'prop-types';
 
 const Board = ({ deleteBoard }) => {
@@ -10,6 +10,7 @@ const Board = ({ deleteBoard }) => {
     const addBoardInput = useRef();
     const { boardId } = useParams();
     const [currentBoard, setCurrentBoard] = useState({});
+    const [boardTitle, setBoardTitle] = useState("");
 
     useEffect(() => {
         getBoard(boardId);
@@ -21,7 +22,9 @@ const Board = ({ deleteBoard }) => {
             const boardDoc = doc(db, "boards", boardId); 
             const boardSnapshot = await getDoc(boardDoc); 
             if (boardSnapshot.exists()) {
-                setCurrentBoard(boardSnapshot.data());
+                const boardData = boardSnapshot.data();
+                setCurrentBoard(boardData);
+                setBoardTitle(boardData.title);
             } else {
                 console.log("Board does not exist!");
             }
@@ -110,7 +113,18 @@ const Board = ({ deleteBoard }) => {
         try {
             await deleteBoard(boardId);
         } catch (error) {
-            console.error('Error deleting board: ', error);
+            console.error('Error deleting board:', error);
+        }
+    };
+
+    const handleUpdateBoardTitle = async (e) => {
+        const newTitle = e.target.value;
+        setBoardTitle(newTitle);
+        try {
+            const boardDoc = doc(db, "boards", boardId);
+            await updateDoc(boardDoc, { title: newTitle });
+        } catch (error) {
+            console.error('Error updating board title:', error);
         }
     };
 
@@ -122,7 +136,11 @@ const Board = ({ deleteBoard }) => {
             }}
         >
             <div className="board-header">
-                <h3>{currentBoard.title}</h3>
+                <input
+                    type="text"
+                    value={boardTitle}
+                    onChange={handleUpdateBoardTitle}
+                />
                 <button onClick={handleDeleteBoard}>Delete board</button>
             </div>
             <div className="lists-wrapper">

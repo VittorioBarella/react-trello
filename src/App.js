@@ -5,7 +5,7 @@ import Home from './components/pages/Home';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import PageNotFound from './components/pages/PageNotFound';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import { getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { getDocs, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { boardsRef } from './firebase';
 
 class App extends React.Component {
@@ -58,6 +58,20 @@ class App extends React.Component {
     }
   }
 
+  updateBoard = async (boardId, newTitle) => {
+    try {
+      const boardDoc = doc(boardsRef, boardId);
+      await updateDoc(boardDoc, { title: newTitle });
+      this.setState({
+        boards: this.state.boards.map(board =>
+          board.id === boardId ? { ...board, title: newTitle } : board
+        )
+      });
+    } catch (error) {
+      console.error('Error updating board:', error);
+    }
+  }
+
   render() {
     return (
       <div>
@@ -77,7 +91,10 @@ class App extends React.Component {
             <Route 
               path="/board/:boardId" 
               element={
-                <BoardWrapper deleteBoard={this.deleteBoard} />
+                <BoardWrapper 
+                  deleteBoard={this.deleteBoard}   
+                  updateBoard={this.updateBoard} 
+                />
               } 
             />
             <Route path="*" element={<PageNotFound />} />
@@ -88,7 +105,7 @@ class App extends React.Component {
   }
 }
 
-const BoardWrapper = ({ deleteBoard }) => {
+const BoardWrapper = ({ deleteBoard , updateBoard }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const params = useParams();
@@ -99,6 +116,7 @@ const BoardWrapper = ({ deleteBoard }) => {
       location={location} 
       params={params} 
       deleteBoard={deleteBoard}
+      updateBoard={updateBoard}
     />
   );
 };
