@@ -24,11 +24,22 @@ const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
+  // Função para atualizar o usuário e navegar para a página correta
+  const updateUserAndNavigate = (user) => {
+    setUser(user);
+    if (user && user.id) {
+      navigate(`/${user.id}/boards`);
+    }
+  };
+
   const logIn = async (email, password, e) => {
     e.preventDefault();
     try {
-      await signInWithEmailAndPassword(firebaseAuth, email, password);
-      navigate(`/${user.id}/boards`);
+      const userCredential = await signInWithEmailAndPassword(firebaseAuth, email, password);
+      updateUserAndNavigate({
+        id: userCredential.user.uid,
+        email: userCredential.user.email,
+      });
     } catch (error) {
       setAuthMessage(error.message);
     }
@@ -37,8 +48,11 @@ const AuthProvider = ({ children }) => {
   const signUp = async (email, password, e) => {
     e.preventDefault();
     try {
-      await createUserWithEmailAndPassword(firebaseAuth, email, password);
-      navigate(`/${user.id}/boards`);
+      const userCredential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+      updateUserAndNavigate({
+        id: userCredential.user.uid,
+        email: userCredential.user.email,
+      });
     } catch (error) {
       setAuthMessage(error.message);
     }
