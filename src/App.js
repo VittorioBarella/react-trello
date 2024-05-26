@@ -8,6 +8,7 @@ import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { getDocs, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { boardsRef } from './firebase';
 import { AuthProvider}  from './components/AuthContext'
+import UserForm from './components/UserForm';
 
 class App extends React.Component {
   state = {
@@ -79,6 +80,10 @@ class App extends React.Component {
         <BrowserRouter>
           <AuthProvider>
             <Routes>
+              <Route
+                path='/'
+                element={<UserForm />}
+              />
               <Route
                 path="/:userId/boards"
                 element={
