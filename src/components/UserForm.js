@@ -1,56 +1,53 @@
-import React from 'react'
-import { AuthConsumer } from './AuthContext'
+import React, { useRef } from 'react';
+import { AuthConsumer } from './AuthContext';
+import { useNavigate } from 'react-router-dom';
 
-class UserForm extends React.Component {
+const UserForm = () => {
+  const emailInput = useRef(null);
+  const passwordInput = useRef(null);
+  const navigate = useNavigate();
 
-  emailInput = React.createRef()
-  passwordInput = React.createRef()
+  const redirect = (userId) => {
+    navigate(`/${userId}/boards`);
+  };
 
-  redirect = (userId) => {
-    this.props.history.push(`/${userId}/boards`)
-  }
+  return (
+    <React.Fragment>
+      <AuthConsumer>
+        {({ user, logIn, signUp, authMessage }) => (
+          !user.id ? (
+            <div className="sign-up-wrapper">
+              <h2>Sign in or create account</h2>
+              {authMessage ? <span>{authMessage}</span> : ''}
+              <form className="sign-up-form">
+                <div>
+                  <input
+                    ref={emailInput}
+                    type="email"
+                    name="email"
+                    placeholder="Email"
+                  />
+                </div>
+                <div>
+                  <input
+                    ref={passwordInput}
+                    type="password"
+                    name="password"
+                    placeholder="Password" />
+                </div>
+                <div>
+                  <button onClick={(e) => logIn(emailInput.current.value, passwordInput.current.value, e)}>Login</button>
+                  <button onClick={(e) => signUp(emailInput.current.value, passwordInput.current.value, e)}>Sign Up</button>
+                </div>
+              </form>
+            </div>
+          ) : (
+            <button onClick={() => redirect(user.id)}>Go to my boards</button>
+          )
+        )}
+      </AuthConsumer>
+    </React.Fragment>
+  );
+};
 
-  render() {
-    return (
-      <React.Fragment>
-        <AuthConsumer>
-          {({ user, logIn, signUp, authMessage }) => (
-            !user.id ? (
-              <div className="sign-up-wrapper">
-                <h2>Sign in or create account</h2>
-                {authMessage ? <span>{authMessage}</span> : ''}
-                <form className="sign-up-form">
-                  <div>
-                    <input
-                      ref={this.emailInput}
-                      type="email"
-                      name="email"
-                      placeholder="Email"
-                    />
-                  </div>
-                  <div>
-                    <input
-                      ref={this.passwordInput}
-                      type="password"
-                      name="password"
-                      placeholder="Password" />
-                  </div>
-                  <div>
-                    <button onClick={(e) => logIn(this.emailInput.current.value, this.passwordInput.current.value, e)}>Login</button>
-                    <button onClick={(e) => signUp(this.emailInput.current.value, this.passwordInput.current.value, e)}>Sign Up</button>
-                  </div>
-                </form>
-              </div>
-            ) : (
-                <button onClick={() => this.redirect(user.id)}>Go to my boards</button>
-              )
-          )}
-        </AuthConsumer>
-      </React.Fragment >
-
-    )
-  }
-}
-
-
-export default UserForm
+export default UserForm;
