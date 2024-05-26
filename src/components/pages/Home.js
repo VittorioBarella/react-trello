@@ -6,18 +6,11 @@ import { useNavigate, useLocation, useParams } from 'react-router-dom';
 
 const Home = ({ boards, createNewBoard, getBoards }) => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const params = useParams();
+  const { userId } = useParams();
 
-  // useEffect substitui componentDidMount
   useEffect(() => {
-    getBoards();
-  }, [getBoards]);
-
-  const history = {
-    push: navigate,
-    replace: (path) => navigate(path, { replace: true }),
-  };
+    getBoards(userId);
+  }, [getBoards, userId]);
 
   return (
     <div>
