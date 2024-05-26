@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { firebaseAuth } from '../firebase';
+import { firebaseAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 
 const AuthContext = createContext();
@@ -10,7 +10,7 @@ const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const unsubscribe = firebaseAuth.onAuthStateChanged((user) => {
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
       if (user) {
         setUser({
           id: user.uid,
@@ -27,7 +27,7 @@ const AuthProvider = ({ children }) => {
   const logIn = async (email, password, e) => {
     e.preventDefault();
     try {
-      await firebaseAuth.signInWithEmailAndPassword(email, password);
+      await signInWithEmailAndPassword(firebaseAuth, email, password);
       navigate(`/${user.id}/boards`);
     } catch (error) {
       setAuthMessage(error.message);
@@ -37,7 +37,7 @@ const AuthProvider = ({ children }) => {
   const signUp = async (email, password, e) => {
     e.preventDefault();
     try {
-      await firebaseAuth.createUserWithEmailAndPassword(email, password);
+      await createUserWithEmailAndPassword(firebaseAuth, email, password);
       navigate(`/${user.id}/boards`);
     } catch (error) {
       setAuthMessage(error.message);
@@ -46,7 +46,7 @@ const AuthProvider = ({ children }) => {
 
   const logOut = () => {
     try {
-      firebaseAuth.signOut();
+      signOut(firebaseAuth);
       setUser({});
       navigate('/');
     } catch (error) {
