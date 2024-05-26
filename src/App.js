@@ -2,10 +2,11 @@ import React from 'react';
 import './App.css';
 import Board from './components/Board'; 
 import Home from './components/pages/Home';
+import { getAuth } from 'firebase/auth';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import PageNotFound from './components/pages/PageNotFound';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import { getDocs, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { getDocs, addDoc, deleteDoc, doc, updateDoc, query, where, orderBy  } from 'firebase/firestore';
 import { boardsRef } from './firebase';
 import { AuthProvider}  from './components/AuthContext'
 import UserForm from './components/UserForm';
@@ -13,21 +14,44 @@ import Header from './components/Header';
 
 class App extends React.Component {
   state = {
-    boards: []
+    boards: [],
+    userId: null
   };
 
   componentDidMount() {
     this.getBoards();
+    this.fetchUserIdAfterAuth();
   }
+
+  fetchUserIdAfterAuth = () => {
+    const auth = getAuth();
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        const userId = user.uid;
+        this.setState({ userId }, () => {
+          this.getBoards();
+        });
+      } else {
+        console.log('User is not authenticated. Redirecting to login page...');
+        this.setState({ 
+          userId: null, 
+          errorMessage: 'Please login to access the content.' 
+        });
+      }
+    });
+  }
+
 
   getBoards = async () => {
     try {
+      const { userId } = this.state;
+      if (!userId) return;
       this.setState({ boards: [] });
-      const boardsSnapshot = await getDocs(boardsRef);
+      const q = query(boardsRef, where('board.user', '==', userId), orderBy('createdAt'));
+      const boardsSnapshot = await getDocs(q);
       const boards = [];
       boardsSnapshot.forEach((doc) => {
         const boardData = doc.data();
-        console.log(boardData); // Log the data of the document to the console
         boards.push({ id: doc.id, ...boardData });
       });
       this.setState({ boards });
