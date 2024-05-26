@@ -12,6 +12,7 @@ const Board = ({ deleteBoard }) => {
     const { boardId } = useParams();
     const [currentBoard, setCurrentBoard] = useState({});
     const [boardTitle, setBoardTitle] = useState("");
+    const [message, setMessage] = useState("");
 
     useEffect(() => {
         getBoard(boardId);
@@ -19,15 +20,15 @@ const Board = ({ deleteBoard }) => {
     }, [boardId]);
 
     const getBoard = async (boardId) => {
-        try {   
-            const boardDoc = doc(db, "boards", boardId); 
-            const boardSnapshot = await getDoc(boardDoc); 
+        try {
+            const boardDoc = doc(db, "boards", boardId);
+            const boardSnapshot = await getDoc(boardDoc);
             if (boardSnapshot.exists()) {
                 const boardData = boardSnapshot.data();
                 setCurrentBoard(boardData);
-                setBoardTitle(boardData.title);
+                setBoardTitle(boardData.title || "");
             } else {
-                console.log("Board does not exist!");
+                setMessage('Board not found...');
             }
         } catch (error) {
             console.log('Error getting board:', error);
@@ -113,6 +114,7 @@ const Board = ({ deleteBoard }) => {
     const handleDeleteBoard = async () => {
         try {
             await deleteBoard(boardId);
+            setMessage('Board not found...');
         } catch (error) {
             console.error('Error deleting board:', error);
         }
@@ -131,42 +133,52 @@ const Board = ({ deleteBoard }) => {
 
     return (
         <AuthConsumer>
-            {({user}) => (
-                <div 
-                    className="board-wrapper"
-                    style={{
-                        backgroundColor: currentBoard.background
-                    }}
-                >
-                    <div className="board-header">
-                        <input
-                            type="text"
-                            value={boardTitle}
-                            onChange={handleUpdateBoardTitle}
-                        />
-                        <button onClick={handleDeleteBoard}>Delete board</button>
-                    </div>
-                    <div className="lists-wrapper">
-                        {currentLists.map(list => (
-                            <List  
-                                key={list.id}
-                                list={list}
-                                deleteList={deleteList} 
-                            />
-                        ))}
-                    </div>
-                    <form 
-                        onSubmit={createNewList}
-                        className="new-list-wrapper"
-                    >
-                        <input 
-                            type="text"
-                            ref={addBoardInput}
-                            name="name"
-                            placeholder=" + New List"
-                        />
-                    </form>
-                </div>
+            {({ user }) => (
+                <React.Fragment>
+                    {user.id === currentBoard.user ? (
+                        <div 
+                            className="board-wrapper"
+                            style={{
+                                backgroundColor: currentBoard.background
+                            }}
+                        >
+                            {message === '' ? (
+                                <div className="board-header">
+                                    <input
+                                        type="text"
+                                        value={boardTitle}
+                                        onChange={handleUpdateBoardTitle}
+                                    />
+                                    <button onClick={handleDeleteBoard}>Delete board</button>
+                                </div>
+                            ) : (
+                                <h2>{message}</h2>
+                            )}
+                            <div className="lists-wrapper">
+                                {currentLists.map(list => (
+                                    <List  
+                                        key={list.id}
+                                        list={list}
+                                        deleteList={deleteList} 
+                                    />
+                                ))}
+                            </div>
+                            <form 
+                                onSubmit={createNewList}
+                                className="new-list-wrapper"
+                            >
+                                <input 
+                                    type={message === '' ? 'text' : 'hidden'}  
+                                    ref={addBoardInput}
+                                    name="name"
+                                    placeholder=" + New List"
+                                />
+                            </form>
+                        </div>
+                    ) : (
+                        <span> </span>
+                    )}
+                </React.Fragment>
             )}
         </AuthConsumer>
     );
@@ -174,6 +186,6 @@ const Board = ({ deleteBoard }) => {
 
 Board.propTypes = {
     deleteBoard: PropTypes.func.isRequired
-}
+};
 
 export default Board;
