@@ -21,7 +21,6 @@ const Home = ({ boards, createNewBoard, getBoards }) => {
 
   return (
     <div>
-      <span>{params.userId}</span>
       <CreateBoardForm createNewBoard={createNewBoard} />
       <div className='board-preview-wrapper'>
         {boards.map((board, index) => (
