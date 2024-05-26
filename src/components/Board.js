@@ -4,6 +4,7 @@ import { db } from "../firebase";
 import { useParams } from 'react-router-dom';
 import { collection, query, where, orderBy, onSnapshot, addDoc, doc, getDoc, deleteDoc, updateDoc } from "firebase/firestore";
 import PropTypes from 'prop-types';
+import { AuthConsumer } from "./AuthContext";
 
 const Board = ({ deleteBoard }) => {
     const [currentLists, setCurrentLists] = useState([]);
@@ -129,41 +130,45 @@ const Board = ({ deleteBoard }) => {
     };
 
     return (
-        <div 
-            className="board-wrapper"
-            style={{
-                backgroundColor: currentBoard.background
-            }}
-        >
-            <div className="board-header">
-                <input
-                    type="text"
-                    value={boardTitle}
-                    onChange={handleUpdateBoardTitle}
-                />
-                <button onClick={handleDeleteBoard}>Delete board</button>
-            </div>
-            <div className="lists-wrapper">
-                {currentLists.map(list => (
-                    <List  
-                        key={list.id}
-                        list={list}
-                        deleteList={deleteList} 
-                    />
-                ))}
-            </div>
-            <form 
-                onSubmit={createNewList}
-                className="new-list-wrapper"
-            >
-                <input 
-                    type="text"
-                    ref={addBoardInput}
-                    name="name"
-                    placeholder=" + New List"
-                />
-            </form>
-        </div>
+        <AuthConsumer>
+            {({user}) => (
+                <div 
+                    className="board-wrapper"
+                    style={{
+                        backgroundColor: currentBoard.background
+                    }}
+                >
+                    <div className="board-header">
+                        <input
+                            type="text"
+                            value={boardTitle}
+                            onChange={handleUpdateBoardTitle}
+                        />
+                        <button onClick={handleDeleteBoard}>Delete board</button>
+                    </div>
+                    <div className="lists-wrapper">
+                        {currentLists.map(list => (
+                            <List  
+                                key={list.id}
+                                list={list}
+                                deleteList={deleteList} 
+                            />
+                        ))}
+                    </div>
+                    <form 
+                        onSubmit={createNewList}
+                        className="new-list-wrapper"
+                    >
+                        <input 
+                            type="text"
+                            ref={addBoardInput}
+                            name="name"
+                            placeholder=" + New List"
+                        />
+                    </form>
+                </div>
+            )}
+        </AuthConsumer>
     );
 };
 

@@ -7,6 +7,7 @@ import PageNotFound from './components/pages/PageNotFound';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { getDocs, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { boardsRef } from './firebase';
+import { AuthProvider}  from './components/AuthContext'
 
 class App extends React.Component {
   state = {
@@ -76,29 +77,31 @@ class App extends React.Component {
     return (
       <div>
         <BrowserRouter>
-          <Routes>
-            <Route
-              path="/:userId/boards"
-              element={
-                <Home 
-                  boards={this.state.boards} 
-                  createNewBoard={this.createNewBoard}
-                  getBoards={this.getBoards}
-                  deleteBoard={this.deleteBoard}
-                />
-              }
-            />
-            <Route 
-              path="/board/:boardId" 
-              element={
-                <BoardWrapper 
-                  deleteBoard={this.deleteBoard}   
-                  updateBoard={this.updateBoard} 
-                />
-              } 
-            />
-            <Route path="*" element={<PageNotFound />} />
-          </Routes>
+          <AuthProvider>
+            <Routes>
+              <Route
+                path="/:userId/boards"
+                element={
+                  <Home 
+                    boards={this.state.boards} 
+                    createNewBoard={this.createNewBoard}
+                    getBoards={this.getBoards}
+                    deleteBoard={this.deleteBoard}
+                  />
+                }
+              />
+              <Route 
+                path="/board/:boardId" 
+                element={
+                  <BoardWrapper 
+                    deleteBoard={this.deleteBoard}   
+                    updateBoard={this.updateBoard} 
+                  />
+                } 
+              />
+              <Route path="*" element={<PageNotFound />} />
+            </Routes>
+          </AuthProvider>
         </BrowserRouter>
       </div>
     );
