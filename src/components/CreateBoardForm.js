@@ -1,70 +1,69 @@
-import React from 'react'
-import PropTypes from 'prop-types'
-import { AuthConsumer } from './AuthContext'
-class CreateBoardForm extends React.Component {
-    state = {
-        title: '',
-        background: '#80ccff'
-    }
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
+import { AuthConsumer } from './AuthContext';
+import { addDoc } from 'firebase/firestore';
+import { boardsRef } from '../firebase';
 
-    handleSubmit = (e, userId) => {
-        e.preventDefault();
-        const board = { 
-            title: this.state.title,
-            background: this.state.background,
-            createdAt: new Date(),
-            user: userId
-        }
-        if(board.title && board.background && board.user) {
-            this.props.createNewBoard(board)
-        }
+const CreateBoardForm = ({ createNewBoard, getBoards }) => {
+  const [title, setTitle] = useState('');
+  const [background, setBackground] = useState('#80ccff');
+
+  const handleSubmit = async (e, userId) => {
+    e.preventDefault();
+    try {
+      const newBoard = {
+        title,
+        background,
+        createdAt: new Date(),
+        user: userId
+      };
+      
+      await addDoc(boardsRef, { board: newBoard });
+      createNewBoard(newBoard);
+      getBoards(); // Chama a função getBoards para atualizar a lista de boards
+      setTitle('');
+      setBackground('#80ccff'); // Define o valor padrão para o background após a criação
+    } catch (error) {
+      console.error('Error creating a new board: ', error);
     }
-    render() {
-        return (
-            <AuthConsumer>
-                {({ user }) => (
-                    <form 
-                    className='create-board-wrapper'
-                    onSubmit={(e) => this.handleSubmit(e, user.id) }
-                    >
-                    <input 
-                        type='text'
-                        name="name"
-                        placeholder='Board name'
-                        onChange={(e) => this.setState({ title: e.target.value })}
-                    />
-                    <select name="background"
-                        onChange={(e) => this.setState({ background: e.target.value })}
-                    >
-                        <option value="#80ccff">
-                            Blue
-                        </option>
-                        <option value="#80ffaa">
-                            Green
-                        </option>
-                        <option value="#f94a1e">
-                            Red
-                        </option>
-                        <option value="#ffb3ff">
-                            Pink
-                        </option>
-                        <option value="#bf00ff">
-                            Purple
-                        </option>
-                        <option value="#ffad33">
-                            Orange
-                        </option>
-                    </select>
-                    <button type='submit'>Create new board</button>
-                    </form>
-                )}
-            </AuthConsumer>
-           
-        )
-    }
-}
+  };
+
+  return (
+    <AuthConsumer>
+      {({ user }) => (
+        <form 
+          className='create-board-wrapper'
+          onSubmit={(e) => handleSubmit(e, user.id)}
+        >
+          <input 
+            type='text'
+            name="name"
+            placeholder='Board name'
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+          <select 
+            name="background"
+            value={background}
+            onChange={(e) => setBackground(e.target.value)}
+          >
+            <option value="#80ccff">Blue</option>
+            <option value="#80ffaa">Green</option>
+            <option value="#f94a1e">Red</option>
+            <option value="#ffb3ff">Pink</option>
+            <option value="#bf00ff">Purple</option>
+            <option value="#ffad33">Orange</option>
+          </select>
+          <button type='submit'>Create new board</button>
+        </form>
+      )}
+    </AuthConsumer>
+  );
+};
 
 CreateBoardForm.propTypes = { 
-    createNewBoard: PropTypes.func.isRequired
-}
-export default CreateBoardForm
+  createNewBoard: PropTypes.func.isRequired,
+  getBoards: PropTypes.func.isRequired,
+};
+
+export default CreateBoardForm;

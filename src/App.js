@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import Board from './components/Board'; 
 import Home from './components/pages/Home';
@@ -6,137 +6,131 @@ import { getAuth } from 'firebase/auth';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import PageNotFound from './components/pages/PageNotFound';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import { getDocs, addDoc, deleteDoc, doc, updateDoc, query, where, orderBy  } from 'firebase/firestore';
+import { getDocs, addDoc, deleteDoc, doc, updateDoc, query, where, orderBy } from 'firebase/firestore';
 import { boardsRef } from './firebase';
-import { AuthProvider}  from './components/AuthContext'
+import { AuthProvider }  from './components/AuthContext';
 import UserForm from './components/UserForm';
 import Header from './components/Header';
 
-class App extends React.Component {
-  state = {
-    boards: [],
-    userId: null
-  };
+const App = () => {
+  const [boards, setBoards] = useState([]);
+  const [userId, setUserId] = useState(null);
 
-  componentDidMount() {
-    this.getBoards();
-    this.fetchUserIdAfterAuth();
-  }
+  useEffect(() => {
+    fetchUserIdAfterAuth();
+  }, []);
 
-  fetchUserIdAfterAuth = () => {
+  const fetchUserIdAfterAuth = () => {
     const auth = getAuth();
     auth.onAuthStateChanged((user) => {
       if (user) {
         const userId = user.uid;
-        this.setState({ userId }, () => {
-          this.getBoards();
-        });
+        setUserId(userId);
+        getBoards();
       } else {
         console.log('User is not authenticated. Redirecting to login page...');
-        this.setState({ 
-          userId: null, 
-          errorMessage: 'Please login to access the content.' 
-        });
+        setUserId(null);
       }
     });
   }
 
-
-  getBoards = async () => {
+  const getBoards = async () => {
     try {
-      const { userId } = this.state;
       if (!userId) return;
-      this.setState({ boards: [] });
+      setBoards([]);
       const q = query(boardsRef, where('board.user', '==', userId), orderBy('createdAt'));
       const boardsSnapshot = await getDocs(q);
-      const boards = [];
+      const boardsData = [];
       boardsSnapshot.forEach((doc) => {
-        const boardData = doc.data();
-        boards.push({ id: doc.id, ...boardData });
+        const boardData = doc.data().board;
+        boardsData.push({ id: doc.id, ...boardData });
       });
-      this.setState({ boards });
+      setBoards(boardsData);
     } catch (error) {
       console.error('Error getting boards:', error);
     }
   }
 
-  createNewBoard = async (board) => {
+  const createNewBoard = async (board) => {
     try {
-      const newBoard = await addDoc(boardsRef, board);
+      const boardData = {
+        title: board.title,
+        background: board.background,
+        createdAt: new Date(), 
+        user: this.state.userId
+      };
+      
+      const newBoard = await addDoc(boardsRef, { board: boardData });
       const boardObj = {
         id: newBoard.id,
-        ...board
+        ...boardData
       };
-
-      this.setState({ boards: [...this.state.boards, boardObj] });
+  
+      this.setState(prevState => ({
+        boards: [...prevState.boards, boardObj]
+      }));
     } catch (error) {
       console.error('Error creating new board:', error);
     }
   }
 
-  deleteBoard = async (boardId) => {
+  const deleteBoard = async (boardId) => {
     try {
       await deleteDoc(doc(boardsRef, boardId));
-      this.setState({
-        boards: this.state.boards.filter(board => board.id !== boardId)
-      });
+      setBoards(prevBoards => prevBoards.filter(board => board.id !== boardId));
     } catch (error) {
       console.error('Error deleting board:', error);
     }
   }
 
-  updateBoard = async (boardId, newTitle) => {
+  const updateBoard = async (boardId, newTitle) => {
     try {
       const boardDoc = doc(boardsRef, boardId);
       await updateDoc(boardDoc, { title: newTitle });
-      this.setState({
-        boards: this.state.boards.map(board =>
-          board.id === boardId ? { ...board, title: newTitle } : board
-        )
-      });
+      setBoards(prevBoards => prevBoards.map(board =>
+        board.id === boardId ? { ...board, title: newTitle } : board
+      ));
     } catch (error) {
       console.error('Error updating board:', error);
     }
   }
 
-  render() {
-    return (
-      <div>
-        <BrowserRouter>
-          <AuthProvider>
-            <Header/>
-              <Routes>
-                <Route
-                  path='/'
-                  element={<UserForm />}
-                />
-                <Route
-                  path="/:userId/boards"
-                  element={
-                    <Home 
-                      boards={this.state.boards} 
-                      createNewBoard={this.createNewBoard}
-                      getBoards={this.getBoards}
-                      deleteBoard={this.deleteBoard}
-                    />
-                  }
-                />
-                <Route 
-                  path="/board/:boardId" 
-                  element={
-                    <BoardWrapper 
-                      deleteBoard={this.deleteBoard}   
-                      updateBoard={this.updateBoard} 
-                    />
-                  } 
-                />
-                <Route path="*" element={<PageNotFound />} />
-              </Routes>
-          </AuthProvider>
-        </BrowserRouter>
-      </div>
-    );
-  }
+  return (
+    <div>
+      <BrowserRouter>
+        <AuthProvider>
+          <Header/>
+            <Routes>
+              <Route
+                path='/'
+                element={<UserForm />}
+              />
+              <Route
+                path="/:userId/boards"
+                element={
+                  <Home 
+                    boards={boards} 
+                    createNewBoard={createNewBoard}
+                    getBoards={getBoards}
+                    deleteBoard={deleteBoard}
+                  />
+                }
+              />
+              <Route 
+                path="/board/:boardId" 
+                element={
+                  <BoardWrapper 
+                    deleteBoard={deleteBoard}   
+                    updateBoard={updateBoard} 
+                  />
+                } 
+              />
+              <Route path="*" element={<PageNotFound />} />
+            </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </div>
+  );
 }
 
 const BoardWrapper = ({ deleteBoard , updateBoard }) => {

@@ -10,11 +10,11 @@ const Home = ({ boards, createNewBoard, getBoards }) => {
 
   useEffect(() => {
     getBoards(userId);
-  }, [getBoards, userId]);
+  }, [userId]);
 
   return (
     <div>
-      <CreateBoardForm createNewBoard={createNewBoard} />
+      <CreateBoardForm createNewBoard={createNewBoard} getBoards={getBoards} /> 
       <div className='board-preview-wrapper'>
         {boards.map((board, index) => (
           <BoardPreview key={index} board={board} />

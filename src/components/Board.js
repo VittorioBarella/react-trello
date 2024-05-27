@@ -72,12 +72,13 @@ const Board = ({ deleteBoard }) => {
         }
     };
 
-    const createNewList = async (e) => {
+    const createNewList = async (e, userId) => {
         e.preventDefault();
         const list = {
             title: addBoardInput.current.value,
             board: boardId,
             createdAt: new Date(),
+            user: userId
         };
 
         try {
