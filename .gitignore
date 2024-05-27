@@ -24,3 +24,5 @@ yarn-error.log*
 
 # Firebase configuration
 /src/firebase.js
+# Local Netlify folder
+.netlify

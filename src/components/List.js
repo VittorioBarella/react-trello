@@ -3,10 +3,11 @@ import Card from "./Card";
 import PropTypes from 'prop-types';
 import { addDoc, collection, query, where, orderBy, onSnapshot, getDocs, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { cardsRef, db } from "../firebase";
+import { AuthConsumer } from "./AuthContext";
 
 const List = ({ list, deleteList }) => {
     const [currentCards, setCurrentCards] = useState([]);
-    const [listTitle, setListTitle] = useState(list.title); // Novo estado para o título da lista
+    const [listTitle, setListTitle] = useState(list.title); 
     const nameInput = useRef();
 
     useEffect(() => {
@@ -90,7 +91,7 @@ const List = ({ list, deleteList }) => {
         }
     };
 
-    const createNewCard = async (e) => {
+    const createNewCard = async (e, userId) => {
         e.preventDefault();
         try {
             const cardText = nameInput.current.value.trim();
@@ -102,7 +103,8 @@ const List = ({ list, deleteList }) => {
                 text: cardText,
                 listId: list.id,
                 labels: [],
-                createdAt: new Date()
+                createdAt: new Date(),
+                user: userId
             };
 
             const docRef = await addDoc(collection(db, 'cards'), newCard);
@@ -132,34 +134,39 @@ const List = ({ list, deleteList }) => {
     };
 
     return (
-        <div className="list">
-            <div className="list-header">
-                <input
-                    type="text"
-                    name="listTitle"
-                    value={listTitle} // Mudança de defaultValue para value
-                    onChange={updateList}
-                />
-                <span onClick={handleDeleteList}>&times;</span>
-            </div>
-            {currentCards.map((card) => (
-                <Card
-                    key={card.id}
-                    data={card}
-                />
-            ))}
-            <form
-                onSubmit={createNewCard}
-                className="new-card-wrapper"
-            >
-                <input
-                    type="text"
-                    ref={nameInput}
-                    name="name"
-                    placeholder=" + New card"
-                />
-            </form>
-        </div>
+        <AuthConsumer>
+            {({ user }) => (
+                <div className="list">
+                    <div className="list-header">
+                        <input
+                            type="text"
+                            name="listTitle"
+                            value={listTitle} // Mudança de defaultValue para value
+                            onChange={updateList}
+                        />
+                        <span onClick={handleDeleteList}>&times;</span>
+                    </div>
+                    {currentCards.map((card) => (
+                        <Card
+                            key={card.id}
+                            data={card}
+                        />
+                    ))}
+                    <form
+                        onSubmit={(e) => createNewCard(e, user.id)} // Passando userId para createNewCard
+                        className="new-card-wrapper"
+                    >
+                        <input
+                            type="text"
+                            ref={nameInput}
+                            name="name"
+                            placeholder=" + New card"
+                        />
+                    </form>
+                </div>
+            )}
+        </AuthConsumer>
+        
     );
 }
 
