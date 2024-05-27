@@ -24,7 +24,6 @@ const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  // Função para atualizar o usuário e navegar para a página correta
   const updateUserAndNavigate = (user) => {
     setUser(user);
     if (user && user.id) {
