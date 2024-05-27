@@ -141,7 +141,7 @@ const List = ({ list, deleteList }) => {
                         <input
                             type="text"
                             name="listTitle"
-                            value={listTitle} // Mudança de defaultValue para value
+                            value={listTitle} 
                             onChange={updateList}
                         />
                         <span onClick={handleDeleteList}>&times;</span>
@@ -153,7 +153,7 @@ const List = ({ list, deleteList }) => {
                         />
                     ))}
                     <form
-                        onSubmit={(e) => createNewCard(e, user.id)} // Passando userId para createNewCard
+                        onSubmit={(e) => createNewCard(e, user.id)} 
                         className="new-card-wrapper"
                     >
                         <input

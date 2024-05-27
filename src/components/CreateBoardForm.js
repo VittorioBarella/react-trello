@@ -4,7 +4,7 @@ import { AuthConsumer } from './AuthContext';
 import { addDoc } from 'firebase/firestore';
 import { boardsRef } from '../firebase';
 
-const CreateBoardForm = ({ createNewBoard, getBoards }) => {
+const CreateBoardForm = ({ createNewBoard }) => {
   const [title, setTitle] = useState('');
   const [background, setBackground] = useState('#80ccff');
 
@@ -20,9 +20,8 @@ const CreateBoardForm = ({ createNewBoard, getBoards }) => {
       
       await addDoc(boardsRef, { board: newBoard });
       createNewBoard(newBoard);
-      getBoards(); // Chama a função getBoards para atualizar a lista de boards
       setTitle('');
-      setBackground('#80ccff'); // Define o valor padrão para o background após a criação
+      setBackground('#80ccff');
     } catch (error) {
       console.error('Error creating a new board: ', error);
     }
@@ -63,7 +62,6 @@ const CreateBoardForm = ({ createNewBoard, getBoards }) => {
 
 CreateBoardForm.propTypes = { 
   createNewBoard: PropTypes.func.isRequired,
-  getBoards: PropTypes.func.isRequired,
 };
 
 export default CreateBoardForm;

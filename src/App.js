@@ -57,7 +57,7 @@ const App = () => {
         title: board.title,
         background: board.background,
         createdAt: new Date(), 
-        user: this.state.userId
+        user: userId 
       };
       
       const newBoard = await addDoc(boardsRef, { board: boardData });
@@ -66,9 +66,7 @@ const App = () => {
         ...boardData
       };
   
-      this.setState(prevState => ({
-        boards: [...prevState.boards, boardObj]
-      }));
+      setBoards(prevBoards => [...prevBoards, boardObj]); 
     } catch (error) {
       console.error('Error creating new board:', error);
     }
