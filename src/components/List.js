@@ -2,13 +2,13 @@ import React, { useState, useEffect, useRef } from "react";
 import Card from "./Card";
 import PropTypes from 'prop-types';
 import { addDoc, collection, query, where, orderBy, onSnapshot, getDocs, deleteDoc, doc, updateDoc } from "firebase/firestore";
-import { cardsRef, db } from "../firebase";
-import { AuthConsumer } from "./AuthContext";
+import { cardsRef, db } from "../firebase"; // Importa referências de Firebase
+import { AuthConsumer } from "./AuthContext"; // Importa AuthConsumer para consumir o contexto de autenticação
 
 const List = ({ list, deleteList }) => {
-    const [currentCards, setCurrentCards] = useState([]);
-    const [listTitle, setListTitle] = useState(list.title); 
-    const nameInput = useRef();
+    const [currentCards, setCurrentCards] = useState([]); // Estado para armazenar os cartões atuais
+    const [listTitle, setListTitle] = useState(list.title); // Estado para armazenar o título da lista
+    const nameInput = useRef(); // Referência para o campo de entrada do nome do cartão
 
     useEffect(() => {
         const fetchCards = async (listId) => {
@@ -53,27 +53,27 @@ const List = ({ list, deleteList }) => {
                     });
                 });
 
-                return () => unsubscribe();
+                return () => unsubscribe(); // Desinscreve do snapshot quando o componente desmonta
             } catch (error) {
-                console.error("Error fetching cards: ", error);
+                console.error("Error fetching cards: ", error); // Log de erro
             }
         };
 
         if (list) {
-            fetchCards(list.id);
+            fetchCards(list.id); // Busca cartões quando a lista é definida
         }
 
-        return () => setCurrentCards([]);
+        return () => setCurrentCards([]); // Limpa cartões quando a lista muda
     }, [list]);
 
     useEffect(() => {
         const unsubscribe = onSnapshot(doc(db, "lists", list.id), (doc) => {
             if (doc.exists()) {
-                setListTitle(doc.data().title);
+                setListTitle(doc.data().title); // Atualiza o título da lista quando há mudanças no documento
             }
         });
 
-        return () => unsubscribe();
+        return () => unsubscribe(); // Desinscreve do snapshot quando o componente desmonta
     }, [list.id]);
 
     const handleDeleteList = async () => {
@@ -82,12 +82,12 @@ const List = ({ list, deleteList }) => {
             const cardsSnapshot = await getDocs(query(cardsRef, where('listId', '==', listId)));
             if (cardsSnapshot.docs.length !== 0) {
                 cardsSnapshot.forEach(card => {
-                    deleteDoc(card.ref);
+                    deleteDoc(card.ref); // Exclui cada cartão associado à lista
                 });
             }
-            await deleteDoc(doc(db, 'lists', listId));
+            await deleteDoc(doc(db, 'lists', listId)); // Exclui a lista
         } catch (error) {
-            console.error('Error deleting list: ', error);
+            console.error('Error deleting list: ', error); // Log de erro
         }
     };
 
@@ -116,9 +116,9 @@ const List = ({ list, deleteList }) => {
                 return prevCards;
             });
 
-            nameInput.current.value = '';
+            nameInput.current.value = ''; // Limpa o campo de entrada após a criação do cartão
         } catch (error) {
-            console.error("Error creating card: ", error);
+            console.error("Error creating card: ", error); // Log de erro
         }
     };
 
@@ -127,9 +127,9 @@ const List = ({ list, deleteList }) => {
             const newTitle = e.currentTarget.value;
             setListTitle(newTitle);
             const listDoc = doc(db, 'lists', list.id);
-            await updateDoc(listDoc, { title: newTitle });
+            await updateDoc(listDoc, { title: newTitle }); // Atualiza o título da lista no Firestore
         } catch (error) {
-            console.error("Error updating list: ", error);
+            console.error("Error updating list: ", error); // Log de erro
         }
     };
 
@@ -142,9 +142,9 @@ const List = ({ list, deleteList }) => {
                             type="text"
                             name="listTitle"
                             value={listTitle} 
-                            onChange={updateList}
+                            onChange={updateList} // Atualiza o título da lista
                         />
-                        <span onClick={handleDeleteList}>&times;</span>
+                        <span onClick={handleDeleteList}>&times;</span> {/* Botão de excluir lista */}
                     </div>
                     {currentCards.map((card) => (
                         <Card
@@ -166,13 +166,12 @@ const List = ({ list, deleteList }) => {
                 </div>
             )}
         </AuthConsumer>
-        
     );
 }
 
 List.propTypes = {
-    list: PropTypes.object.isRequired,
-    deleteList: PropTypes.func.isRequired
+    list: PropTypes.object.isRequired, // Validação de tipo para a lista
+    deleteList: PropTypes.func.isRequired // Validação de tipo para a função de deletar lista
 }
 
-export default List;
+export default List; // Exporta o componente List como padrão
